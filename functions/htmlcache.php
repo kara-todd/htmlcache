@@ -20,6 +20,10 @@ if (!function_exists('htmlcache_filename')) {
             $protocol = 'https://';
         }
 
+        if (!isset($_SERVER['HTTP_HOST'])) {
+            return false;
+        }
+
         $host = $_SERVER['HTTP_HOST'];
         if (empty($host) && !empty($_SERVER['SERVER_NAME'])) {
             $host = $_SERVER['SERVER_NAME'];
@@ -68,6 +72,23 @@ if (!function_exists('htmlcache_filename')) {
         }
     }
 
+    function htmlcache_replaceCSRFTokens($content, $tokenName)
+    {
+        $craftPath = dirname(dirname(dirname(__DIR__)));
+        $path = rtrim($craftPath, '/').'/app/index.php';
+        require_once $path;
+
+        $token = Craft\craft()->request->getCsrfToken();
+
+        $content = preg_replace(
+            '/name="' . $tokenName . '" value="(.*)"/',
+            'name="' . $tokenName . '" value="' . $token . '"',
+            $content
+        );
+
+        return $content;
+    }
+
     function htmlcache_checkCache($direct = true)
     {
         $file = htmlcache_filename(true);
@@ -103,6 +124,12 @@ if (!function_exists('htmlcache_filename')) {
                 if ($direct) {
                     header('Content-type:text/html;charset=UTF-8');
                 }
+
+                if ($settings['enableCsrfProtection'] === true &&
+                    stristr($content, $settings['csrfTokenName']) !== false) {
+                    $content = htmlcache_replaceCSRFTokens($content, $settings['csrfTokenName']);
+                }
+
                 // Output the content
                 echo $content;
             }

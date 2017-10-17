@@ -181,6 +181,8 @@ class HtmlcachePlugin extends BasePlugin
 
         if (!empty($values['htmlcacheSettingsForm'])) {
             // Write these settings to a .json file for offline reference
+            $values['enableCsrfProtection'] = craft()->config->get('enableCsrfProtection');
+            $values['csrfTokenName'] = craft()->config->get('csrfTokenName');
             $path = craft()->path->getStoragePath() . 'runtime' . DIRECTORY_SEPARATOR . 'htmlcache' . DIRECTORY_SEPARATOR;
             IOHelper::ensureFolderExists($path);
             $fp = fopen($path . 'settings.json', 'w+');
